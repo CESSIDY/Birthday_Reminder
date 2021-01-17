@@ -1,0 +1,72 @@
+<MyGrid>:
+    al_persons_info: al_left
+    gl_person_input: gl_right
+    first_name_input: first_name
+    last_name_input: last_name
+    birthday_input: birthday
+    button_save: button_save
+    hidden_id: hidden_id
+
+    Label:
+        id: hidden_id
+        text: ''
+
+    BoxLayout:
+        size: root.width, root.height
+        orientation: 'horizontal'
+        canvas:
+            Color:
+                rgb: (.24, .25, .25)
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+        AnchorLayout:
+            id: al_left
+            canvas:
+                Color:
+                    rgb: (.27, .17, .38)
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
+        GridLayout:
+            id: gl_right
+            canvas:
+                Color:
+                    rgb: (.27, .17, .38)
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            cols:1
+            spacing:1
+            padding: [28,28,28,28]
+            Label:
+                text_size: self.width, None
+                text: "First name"
+            TextInput:
+                id: first_name
+                multiline: False
+                padding: [20,20,20,20]
+                font_size: 20
+
+            Label:
+                text_size: self.width, None
+                text: "Last name"
+            TextInput:
+                id: last_name
+                multiline: False
+                padding: [20,20,20,20]
+                font_size: 20
+
+            Label:
+                text_size: self.width, None
+                text: "Birthday"
+            TextInput:
+                id: birthday
+                multiline: False
+                padding: [20,20,20,20]
+                font_size: 20
+            Button:
+                id: button_save
+                text: "Save"
