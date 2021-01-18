@@ -231,9 +231,18 @@ class CostumeMDDatePicker(MDDatePicker):
 
     def __init__(self, callback, **kwargs):
         super().__init__(callback, **kwargs)
-        self.day = 1
-        self.mount = 1
-        self.year = 2000
+        if 'day' in kwargs and kwargs['day']:
+            self.day = kwargs['day']
+        else:
+            self.day = 1
+        if 'mount' in kwargs and kwargs['mount']:
+            self.mount = kwargs['mount']
+        else:
+            self.mount = 1
+        if 'year' in kwargs and kwargs['year']:
+            self.year = kwargs['year']
+        else:
+            self.year = 2000
         self.set_date(day=self.day, month=self.mount, year=self.year)
 
     def change_year(self, operation):

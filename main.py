@@ -150,6 +150,7 @@ class FriendTableGUI(MDDataTable):
         self.remove_button.first_name = result[1]['text']
         self.remove_button.last_name = result[2]['text']
         self.remove_button.birth_date = result[3]['text']
+
         self.edit_button.first_name = result[1]['text']
         self.edit_button.last_name = result[2]['text']
         self.edit_button.birth_date = result[3]['text']
@@ -203,7 +204,7 @@ class MyGrid(Widget):
                                                  background_color=[.25, .59, .76, 1],
                                                  background_normal='')
         self.button_save.bind(on_press=self.save_in_database)
-        self.birthday_input.bind(focus=self.birtday_input)
+        self.birthday_input.bind(focus=self.open_date_picker)
         self.al_persons_info.add_widget(self.friendTableGUI)
 
     def refresh_table(self):
@@ -229,15 +230,18 @@ class MyGrid(Widget):
         self.last_name_input.text = ""
         self.birthday_input.text = ""
 
-    def birtday_input(self, instance, value):
+    def open_date_picker(self, instance, value):
         if value:
-            self.show_date_picker()
+            birthday_input_text = self.birthday_input.text
+            year = None
+            mount = None
+            day = None
+            if birthday_input_text:
+                year, mount, day = map(lambda v: int(v), str(birthday_input_text).split("-"))
+            picker = CostumeMDDatePicker(self.get_date_from_date_picker, year=year, month=mount, day=day)
+            picker.open()
 
-    def show_date_picker(self):
-        picker = CostumeMDDatePicker(callback=self.got_date)
-        picker.open()
-
-    def got_date(self, the_date):
+    def get_date_from_date_picker(self, the_date):
         try:
             self.birthday_input.text = str(the_date)
         except:
