@@ -32,3 +32,10 @@ class DataBase:
             cur.execute(sql)
         rows = cur.fetchall()
         return rows
+
+    def create_table(self, create_table_sql):
+        try:
+            c = self.connection.cursor()
+            c.execute(create_table_sql)
+        except Error as e:
+            print(e)

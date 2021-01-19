@@ -1,0 +1,35 @@
+<BirthDayBaseGrid>:
+    al_persons_info: al_left
+    gl_person_input: gl_right
+
+    BoxLayout:
+        size: root.width, root.height
+        orientation: 'horizontal'
+        canvas:
+            Color:
+                rgb: (.24, .25, .25)
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+        AnchorLayout:
+            id: al_left
+            canvas:
+                Color:
+                    rgb: (.27, .17, .38)
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
+        GridLayout:
+            id: gl_right
+            canvas:
+                Color:
+                    rgb: (.27, .17, .38)
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            cols:1
+            spacing:1
+            padding: [28,28,28,28]
+
