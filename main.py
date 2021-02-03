@@ -1,4 +1,5 @@
 from kivy.app import App
+from kivy.clock import Clock
 from kivy.uix.button import Button
 from kivy.uix.popup import Popup
 from kivy.uix.textinput import TextInput
@@ -97,6 +98,7 @@ class FriendTableGUI(MDDataTable):
         self.sorted_order = "ASC"
         self.elevation = 2
         self.popup = None
+        self.layout = BoxLayout(orientation='horizontal', spacing=5, padding=5)
         self.remove_button = Button(text="REMOVE", on_press=press_remove_func, background_color=[.69, .07, 0, 1],
                                     background_normal='')
         self.edit_button = Button(text="EDIT", on_press=press_edit_func, background_color=[.25, .59, .76, 1],
@@ -129,15 +131,17 @@ class FriendTableGUI(MDDataTable):
         lower_date = list()
         upper_date = list()
         for row in rows_data:
-            try:
-                year, month, day = str(row[-1]).split("-")
-                if int(month) <= current_month:
-                    if int(day) <= current_day:
-                        lower_date.append(row)
-                        continue
+                try:
+                    year, month, day = str(row[-1]).split("-")
+                except ValueError:
+                    continue
+                if int(month) < current_month:
+                    lower_date.append(row)
+                    continue
+                elif(int(month) == current_month) and (int(day) < current_day):
+                    lower_date.append(row)
+                    continue
                 upper_date.append(row)
-            except ValueError:
-                pass
         rows_data = upper_date + lower_date
         return rows_data
 
@@ -149,7 +153,9 @@ class FriendTableGUI(MDDataTable):
                 result = list(filter(lambda x: x['range'] == row_on_page['range'], self.table_data.recycle_data))
                 break
 
-        layout = BoxLayout(orientation='horizontal', spacing=5, padding=5)
+        self.layout.remove_widget(self.remove_button)
+        self.layout.remove_widget(self.edit_button)
+        self.layout = BoxLayout(orientation='horizontal', spacing=5, padding=5)
         self.remove_button.first_name = result[1]['text']
         self.remove_button.last_name = result[2]['text']
         self.remove_button.birth_date = result[3]['text']
@@ -158,10 +164,10 @@ class FriendTableGUI(MDDataTable):
         self.edit_button.last_name = result[2]['text']
         self.edit_button.birth_date = result[3]['text']
 
-        layout.add_widget(self.remove_button)
-        layout.add_widget(self.edit_button)
+        self.layout.add_widget(self.remove_button)
+        self.layout.add_widget(self.edit_button)
 
-        self.popup = Popup(title='Row settings', content=layout, size_hint=(None, None), size=(220, 120))
+        self.popup = Popup(title='Row settings', content=self.layout, size_hint=(None, None), size=(220, 120))
         self.popup.open()
 
 
@@ -223,11 +229,58 @@ class FriendInputGUI:
             pass
 
 
+class FriendReminderGUI(Popup):
+    def __init__(self, friends=None, **kwargs):
+        if friends:
+            self.friends = friends
+        else:
+            self.friends = DataBaseAdapter().select_all_friends()
+        self.title = 'Happy Birthday LIST'
+        self.content = self.get_content()
+        self.size_hint = (None, None)
+        self.size = (400, 400)
+        self.auto_dismiss = True
+        super(FriendReminderGUI, self).__init__(**kwargs)
+    
+    def open(self, *largs, **kwargs):
+        super(FriendReminderGUI, self).open(*largs, **kwargs)
+        Clock.schedule_once(self.dismiss, 10)
+
+    
+    @staticmethod
+    def is_current_day(friend):
+        if friend[-1]:
+            year, month, day = str(friend[-1]).split("-")
+            today = datetime.datetime.today()
+            current_month = today.month
+            current_day = today.day
+            if int(month) == int(current_month) and int(day) == int(current_day):
+                return True
+        return False
+
+    def press_close(self, instance):
+        self.dismiss()
+
+    def get_content(self):
+        friends_birthday_now = list(filter(self.is_current_day, self.friends))
+        if len(friends_birthday_now):
+            layout = BoxLayout(orientation='vertical', spacing=5, padding=5)
+            for friend in friends_birthday_now:
+                layout.add_widget(Label(text=f"{friend[1]} {friend[2]}"))
+            layout.add_widget(Button(text="CLOSE",
+                                     on_press=self.press_close,
+                                     background_color=[.69, .07, 0, 1],
+                                     background_normal=''))
+
+            return layout
+        return Widget()
+
+
 class BirthDayBaseGrid(Widget):
     def __new__(cls, *args, **kwargs):
-        cls.gl_person_input = ObjectProperty(None)
-        cls.al_persons_info = ObjectProperty(None)
-        cls.gl_persons_scroll_info = ObjectProperty(None)
+        cls.gl_person_input = ObjectProperty(None, allownone=True)
+        cls.al_persons_info = ObjectProperty(None, allownone=True)
+        cls.gl_persons_scroll_info = ObjectProperty(None, allownone=True)
         return super(BirthDayBaseGrid, cls).__new__(cls, *args, **kwargs)
 
     def __init__(self, **kwargs):
@@ -235,13 +288,22 @@ class BirthDayBaseGrid(Widget):
         Window.size = (1300, 500)
         self.database_adapter = DataBaseAdapter()
         self.database_adapter.create_all_tables()
-
-        self.friendTableGUI = FriendTableGUI(friends=self.database_adapter.select_all_friends(),
+        friends = self.database_adapter.select_all_friends()
+        self.friendTableGUI = FriendTableGUI(friends=friends,
                                              press_edit_func=self.press_edit,
                                              press_remove_func=self.press_remove)
         self.al_persons_info.add_widget(self.friendTableGUI)
         self.friendInputGUI = FriendInputGUI(base_layout=self.gl_person_input,
                                              press_save_func=self.press_save)
+        self.reminder_popup = FriendReminderGUI(friends=friends)
+        today = datetime.datetime.today()
+        seconds_until_next_day = ((24*60*60) - (((today.hour*60)*60) + (today.minute*60) + today.second))
+
+        Clock.schedule_once(self.open_reminder, 15)
+        Clock.schedule_once(self.open_reminder, seconds_until_next_day)
+
+    def open_reminder(self, *args):
+        self.reminder_popup.open()
 
     def refresh_table(self):
         self.al_persons_info.remove_widget(self.friendTableGUI)
@@ -276,9 +338,9 @@ class BirthDayListApp(MDApp):
         super().__init__(**kwargs)
 
     def build(self):
-        main_grid = BirthDayBaseGrid()
-        return main_grid
+        return BirthDayBaseGrid()
 
 
 if __name__ == "__main__":
-    BirthDayListApp().run()
+    app = BirthDayListApp()
+    app.run()

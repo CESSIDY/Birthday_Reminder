@@ -8,6 +8,8 @@ class DataBase:
         if not db_file:
             local_dir = os.path.dirname(__file__)
             db_file = os.path.join(local_dir, 'friends_list.db')
+            # file = open('friends_list.db', 'w+')
+            # file.close()
         self.db_file = db_file
         self.connection = None
         self.create_connection()
